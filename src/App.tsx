@@ -1,26 +1,32 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import { Box } from "@mantine/core";
+import "./App.css";
+import GenesisForm from "./form";
 
-function App() {
+export default function App() {
+  const download = (content: object, filename: string) => {
+    const blob = new Blob([JSON.stringify(content, null, 4)], {
+      type: "application/json",
+    });
+    const a = document.createElement("a");
+    a.href = window.URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    a.remove();
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Box className="App">
+      <Box className="form-wrap">
+        <GenesisForm
+          onGenerated={({ addresses, genesis }) => {
+            download(addresses, "addresses.json");
+            download(genesis, "genesis.json");
+          }}
+        />
+      </Box>
+      <footer className="footer">
+        Copyright © 2022 Oasys | Blockchain for Games All Rights Reserved.
+      </footer>
+    </Box>
   );
 }
-
-export default App;
