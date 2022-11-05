@@ -3,10 +3,11 @@ import {
   LoadingOverlay,
   TextInput,
   Radio,
-  Checkbox,
   Button,
   Group,
   Box,
+  Divider,
+  createStyles,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { ethers } from "ethers";
@@ -28,8 +29,9 @@ type props = {
 type FormValues = GenesisParams & {
   network: "mainnet" | "testnet" | "custom";
   rpc: string;
-  advanced: boolean;
+  expert: boolean;
   builtTx: string;
+  builder: string;
 };
 
 const validateTxHash = (s: string): null | string =>
@@ -38,7 +40,16 @@ const validateTxHash = (s: string): null | string =>
 const validateAddress = (s: string): null | string =>
   /^0x[a-fA-F0-9]{40}$/.test(s) ? null : "Invalid address format.";
 
+const inputStyles = createStyles((theme) => ({
+  disabled: {
+    color: "black !important",
+    backgroundColor: "#eee !important",
+  },
+}));
+
 export default function GenesisForm({ onGenerated }: props) {
+  const { classes } = inputStyles();
+
   const [loading, setLoading] = useState(false);
   const [contracts, setContracts] = useState<null | NamedContracts>(null);
 
@@ -46,8 +57,9 @@ export default function GenesisForm({ onGenerated }: props) {
     initialValues: {
       network: "mainnet",
       rpc: "",
-      advanced: false,
+      expert: false,
       builtTx: "",
+      builder: "",
       // GenesisParams
       chainId: 0,
       ovmWhitelistOwner: ZeroAddress,
@@ -72,9 +84,14 @@ export default function GenesisForm({ onGenerated }: props) {
   });
 
   const handleSubmit = form.onSubmit(async (values) => {
-    if (contracts) {
+    if (!contracts) return;
+
+    try {
+      setLoading(true);
       const genesis = await makeGenesisJson(values, contracts);
       onGenerated({ addresses: contracts, genesis });
+    } finally {
+      setLoading(false);
     }
   });
 
@@ -112,6 +129,7 @@ export default function GenesisForm({ onGenerated }: props) {
 
       setContracts(contracts);
       form.setFieldValue("chainId", chainId);
+      form.setFieldValue("builder", builder);
       form.setFieldValue("contracts", contracts);
       form.setFieldValue("sequencer", contracts.OVM_Sequencer);
       form.setFieldValue("proposer", contracts.OVM_Proposer);
@@ -163,12 +181,42 @@ export default function GenesisForm({ onGenerated }: props) {
           {...form.getInputProps("builtTx")}
         />
 
-        <Checkbox
-          label="Advanced Mode"
-          {...form.getInputProps("advanced", { type: "checkbox" })}
+        <Divider />
+
+        <TextInput
+          label="Builder Address"
+          classNames={{ disabled: classes.disabled }}
+          disabled
+          {...form.getInputProps("builder")}
         />
 
-        {form.values.advanced && (
+        <TextInput
+          label="Chain ID"
+          classNames={{ disabled: classes.disabled }}
+          disabled
+          {...form.getInputProps("chainId")}
+        />
+
+        <TextInput
+          label="Sequencer Address"
+          classNames={{ disabled: classes.disabled }}
+          disabled
+          {...form.getInputProps("sequencer")}
+        />
+
+        <TextInput
+          label="Proposer Address"
+          classNames={{ disabled: classes.disabled }}
+          disabled
+          {...form.getInputProps("proposer")}
+        />
+
+        {/* <Checkbox
+          label="Expert Mode"
+          {...form.getInputProps("expert", { type: "checkbox" })}
+        /> */}
+
+        {form.values.expert && (
           <>
             <TextInput
               withAsterisk
